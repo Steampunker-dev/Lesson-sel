@@ -27,7 +27,6 @@ func (h *Handler) LessonItemList(ctx *gin.Context) {
 			})
 			return
 		}
-
 		ctx.HTML(http.StatusOK, "index.html", gin.H{
 			"NoCards":          "",
 			"tasks":            cards,
@@ -38,7 +37,6 @@ func (h *Handler) LessonItemList(ctx *gin.Context) {
 		})
 		return
 	}
-
 	cards, err := h.Repository.SearchTaskItem(minutesFrom, minutesTo)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -71,15 +69,6 @@ func (h *Handler) LessonItemByID(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "cardDetails.html", gin.H{
 		"task": card,
 	})
-}
-
-// DeleteLessonItem удаляет карточку и редиректит на главную
-func (h *Handler) DeleteLessonItem(ctx *gin.Context) {
-	id := ctx.Param("id")
-	err := h.Repository.DeleteTaskItem(id)
-	if err != nil {
-	}
-	ctx.Redirect(http.StatusFound, "/")
 }
 
 // DeleteLessonReq удаляет заявку и редиректит на главную
@@ -129,7 +118,12 @@ func (h *Handler) GetMytaskCards(ctx *gin.Context) {
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}
-
+		forcedList, err := h.Repository.TaskLessonList(cards)
+		if err != nil {
+			// Если произошла ошибка, перенаправляем на главную страницу
+			ctx.Redirect(http.StatusFound, "/")
+			return
+		}
 		timestamp := taskRequest.LessonDate
 		formattedTime := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", timestamp.Year(), timestamp.Month(), timestamp.Day(), timestamp.Hour(), timestamp.Minute(), timestamp.Second())
 
@@ -141,6 +135,7 @@ func (h *Handler) GetMytaskCards(ctx *gin.Context) {
 			"Data":       formattedTime,
 			"LessonType": taskRequest.LessonType,
 			"ReqID":      taskRequestId,
+			"ForcedList": forcedList,
 		})
 	} else {
 		h.errorHandler(ctx, http.StatusBadRequest, err)

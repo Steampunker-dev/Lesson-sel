@@ -18,6 +18,34 @@ func (r *Repository) TaskItemList() (*[]ds.TaskItem, error) {
 	return &taskItems, nil
 }
 
+// TaskLessonList получает список карточек и возвращает список forced по последним вхождениям
+func (r *Repository) TaskLessonList(cards []*ds.TaskItem) ([]bool, error) {
+	var taskLessons []ds.TaskLesson
+	var forcedList []bool
+
+	// Получаем все TaskLessons из базы данных
+	if err := r.db.Find(&taskLessons).Error; err != nil {
+		return nil, err
+	}
+
+	// Создаем мапу для быстрого доступа к Forced значению по ItemID
+	forcedMap := make(map[int]bool)
+	for _, lesson := range taskLessons {
+		forcedMap[int(lesson.ItemID)] = lesson.Forced
+	}
+
+	// Заполняем forcedList на основе карточек
+	for _, item := range cards {
+		if forced, exists := forcedMap[int(item.ID)]; exists {
+			forcedList = append(forcedList, forced)
+		} else {
+			forcedList = append(forcedList, false)
+		}
+	}
+
+	return forcedList, nil
+}
+
 // SearchTaskItem возвращает список услуг, отфильтрованный по минутам
 func (r *Repository) SearchTaskItem(minutesFrom, minutesTo string) (*[]ds.TaskItem, error) {
 	intMinutesFrom, _ := strconv.Atoi(minutesFrom)

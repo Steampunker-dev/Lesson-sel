@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -8,7 +6,6 @@
     <title>Специальные Задания</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-
         .lesson-container {
             padding-right: 50px;
             padding-left: 50px;
@@ -26,10 +23,6 @@
             line-height: 1.5;
             color: #333;
         }
-
-
-
-
     </style>
 </head>
 <body>
@@ -44,16 +37,12 @@
 <main>
     <div class="task-list">
         <div class="lesson-container">
-            <div class="lesson-text"> Тип занятия</div>
-            <div class="request-info">
-                {{ .LessonType }}
-            </div>
-            <div class="lesson-text"> Дата создания</div>
-            <div class="request-info">
-                {{ .Data }}
-            </div>
+            <div class="lesson-text">Тип занятия</div>
+            <div class="request-info">{{ .LessonType }}</div>
+            <div class="lesson-text">Дата создания</div>
+            <div class="request-info">{{ .Data }}</div>
         </div>
-    </div>
+
         {{ range $index, $task := .tasks }}
         <div class="task-item">
             <img src="{{ $task.Image }}" alt="Задание {{ $task.ID }}" width="150" height="150">
@@ -61,10 +50,14 @@
                 <h3>{{ $task.Title }}</h3>
                 <span class="hours">{{ $task.Minutes }} минут на выполнение</span>
                 <form style="text-decoration: none; margin-top: 20px">
-                    <input type="checkbox" id="checkbox{{$task.ID}}" disabled class="custom-checkbox">
-                    <label for="checkbox{{$task.ID}}" class="custom-checkbox-label">Необязательное</label>
+                    <!-- Используем значение из forcedList для установки атрибута checked -->
+                    <input type="checkbox" id="checkbox{{$task.ID}}" disabled class="custom-checkbox"
+                           {{ if index $.ForcedList $index }}checked{{ end }}>
+                    <label for="checkbox{{$task.ID}}" class="custom-checkbox-label">
+                        {{ if index $.ForcedList $index }}Обязательное{{ else }}Необязательное{{ end }}
+                    </label>
                 </form>
-                <a href="/abouttask/{{ .ID }}" style="text-decoration: none; margin-top: 10px"  class="button12" >Подробнее</a>
+                <a href="/abouttask/{{ $task.ID }}" style="text-decoration: none; margin-top: 10px" class="button12">Подробнее</a>
             </div>
         </div>
         {{ end }}

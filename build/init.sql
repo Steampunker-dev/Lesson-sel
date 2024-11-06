@@ -39,6 +39,6 @@ CREATE TABLE task_lessons (
                              item_id BIGINT NOT NULL,
                              request_id BIGINT NOT NULL,
                              forced BOOLEAN NOT NULL DEFAULT false,
-                             FOREIGN KEY (item_id) REFERENCES task_items(id),
-                             FOREIGN KEY (request_id) REFERENCES lesson_requests(id)
+                             UNIQUE (item_id, request_id)
+
 );
