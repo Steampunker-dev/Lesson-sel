@@ -23,6 +23,7 @@ CREATE TABLE lesson_requests (
                                  id SERIAL PRIMARY KEY,
                                  date_created TIMESTAMP NOT NULL,
                                  date_formed TIMESTAMP ,
+                                 date_accepted TIMESTAMP,
                                  status VARCHAR(255),
 
                                  lesson_date TIMESTAMP,
