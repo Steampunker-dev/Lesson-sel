@@ -1,6 +1,9 @@
 package ds
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type LessonRequest struct {
 	ID           uint      `json:"id" gorm:"primaryKey"`
@@ -15,6 +18,7 @@ type LessonRequest struct {
 	ModeratorID uint      `json:"-"`
 	User        User      `json:"-" gorm:"foreignKey:UserID"`
 	Moderator   User      `json:"-" gorm:"foreignKey:ModeratorID"`
+	LessonTime  int64     `json:"Lesson_time"`
 }
 
 const (
@@ -30,3 +34,14 @@ const (
 	Common_lesson = "Обычное занятие"
 	Exam_lesson   = "Экзамен"
 )
+
+func (d LessonRequest) MarshalJSON() ([]byte, error) {
+	type Alias LessonRequest
+	return json.Marshal(&struct {
+		DeliveryDate string `json:"delivery_date"`
+		*Alias
+	}{
+		DeliveryDate: d.LessonDate.Format("2006-01-02"),
+		Alias:        (*Alias)(&d),
+	})
+}

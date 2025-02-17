@@ -11,6 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// @title Lesson_sel
+// @version 1.0
+// @description Lesson service
+
+// @host 127.0.0.1
+// @schemes http
+// @BasePath /
 func main() {
 	logger := logrus.New()
 	router := gin.Default()
@@ -23,7 +30,9 @@ func main() {
 
 	fmt.Println(postgresString)
 
-	rep, err := repository.NewRepository(postgresString, logger)
+	redis := conf.Redis
+
+	rep, err := repository.NewRepository(postgresString, logger, redis)
 	if err != nil {
 		logrus.Fatalln("Error with repo: err", err)
 	}
