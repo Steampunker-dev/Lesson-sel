@@ -8,6 +8,7 @@ type GetLessonsRequest struct {
 	DateFrom string `form:"date_from"` // дата начала диапазона
 	DateTo   string `form:"date_to"`   // дата конца диапазона
 	Status   string `form:"status"`    // статус
+	UserID   uint   `form:"user_id"`   // идентификатор пользователя
 }
 
 type GetMyLessonCardsRequest struct {

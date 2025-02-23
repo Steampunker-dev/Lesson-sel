@@ -2,9 +2,11 @@ package repository
 
 import (
 	"awesomeProject/internal/app/ds"
+	"fmt"
+	"github.com/pkg/errors"
+	"strconv"
 )
 
-// IsAdmin проверяет, является ли пользователь администратором
 func (r *Repository) IsAdmin(userID uint) bool {
 	var user ds.User
 	if err := r.db.Where("id = ?", userID).First(&user).Error; err != nil {
@@ -15,9 +17,14 @@ func (r *Repository) IsAdmin(userID uint) bool {
 
 // CreateUser - создает нового пользователя
 func (r *Repository) CreateUser(name, password string) (*ds.User, error) {
+
 	user := &ds.User{
 		Login:    name,
 		Password: password,
+	}
+	// логин не может повторяться
+	if err := r.db.Where("login = ?", name).First(&user).Error; err == nil {
+		return nil, fmt.Errorf("user with login %s already exists", name)
 	}
 	if err := r.db.Create(user).Error; err != nil {
 		return nil, err
@@ -43,15 +50,41 @@ func (r *Repository) UpdateUser(id uint, name, password string) (*ds.User, error
 }
 
 // AuthUser - аутентификация пользователя по логину и паролю
-func (r *Repository) AuthUser(name, password string) (*ds.User, error) {
+func (r *Repository) AuthUser(name, password string) (string, error) {
 	var user ds.User
-	if err := r.db.Where("login = ? AND password = ?", name, password).First(&user).Error; err != nil {
-		return nil, err
+	// сперва проверим по логину
+	if err := r.db.Where("login = ?", name).First(&user).Error; err != nil {
+		return "", errors.New("user does not exist")
+
 	}
-	return &user, nil
+	if user.Password != password {
+		return "", errors.New("incorrect password")
+	}
+
+	token, err := GenerateJWTToken(user.ID, user.IsAdmin)
+	if err != nil {
+		return "", err
+	}
+
+	err = r.SaveJWTToken(user.ID, token)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 // LogoutUser - выход пользователя
-func (r *Repository) LogoutUser(userID uint) error {
+func (r *Repository) LogoutUser(login string) error {
+	var user ds.User
+	if err := r.db.Where("login = ?", login).First(&user).Error; err != nil {
+		return errors.New("user does not exist")
+	}
+	idStr := strconv.FormatUint(uint64(user.ID), 10)
+	exp := ExpTime
+	err := r.rd.Set(idStr, "blacklist", exp).Err()
+	if err != nil {
+		return err
+	}
 	return nil
 }

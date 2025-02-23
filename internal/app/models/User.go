@@ -5,11 +5,11 @@ import "awesomeProject/internal/app/ds"
 type CreateUserRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
+	isAdmin  bool   `json:"is_admin"`
 }
 
 type CreateUserResponse struct {
-	Registration string   `json:"registration"`
-	User         *ds.User `json:"user"`
+	User *ds.User `json:"user"`
 }
 
 type UpdateUserRequest struct {
@@ -18,11 +18,26 @@ type UpdateUserRequest struct {
 	Password string `json:"password"`
 }
 
+type AuthUserRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
 type AuthUserResponse struct {
-	Auth string   `json:"auth"`
-	User *ds.User `json:"user"`
+	Token string `json:"token"`
 }
 
 type LogoutUserRequest struct {
-	ID uint `json:"id"`
+	Login string `json:"login"`
+}
+
+type LoginUserRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+type LoginUserResponse struct {
+	ExpiresIn   int    `json:"expires_in"`
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
 }

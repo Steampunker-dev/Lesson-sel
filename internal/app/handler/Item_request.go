@@ -7,7 +7,15 @@ import (
 	"strconv"
 )
 
-// DeleteDC - удаляет услугу из заявки
+// DeleteDC
+// @Description delete dc
+// @Tags DC
+// @Produce  json
+// @Param id path int true "lesson id"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tl/delete/{id} [delete]
 func (h *Handler) DeleteDC(ctx *gin.Context) {
 	lessonid, _ := strconv.Atoi(ctx.Param("id"))
 	var request models.DeleteTLRequest
@@ -26,7 +34,15 @@ func (h *Handler) DeleteDC(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
-// UpdateDCCount - обновляет количество услуг в заявке
+// UpdateDCCount
+// @Description update dc count
+// @Tags DC
+// @Produce  json
+// @Param id path int true "lesson id"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tl/count/{id} [put]
 func (h *Handler) UpdateDCCount(ctx *gin.Context) {
 	lessonid, _ := strconv.Atoi(ctx.Param("id"))
 	var request models.UpdateTLCountRequest

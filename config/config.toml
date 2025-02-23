@@ -1,2 +1,4 @@
 ServiceHost = "localhost"
 ServicePort = 8080
+RedisDialTimeout = "10s"
+RedisReadTimeout = "10s"

@@ -203,8 +203,16 @@ func (r *Repository) HasRequestByUserID(userID uint) (uint, error) {
 }
 
 // GetLessons - возвращает пары с учетом фильтров
-func (r *Repository) GetLessons(dateFrom, dateTo time.Time, status string) ([]*ds.LessonRequest, error) {
+func (r *Repository) GetLessons(dateFrom, dateTo time.Time, status string, userID uint) ([]*ds.LessonRequest, error) {
 	var lessons []*ds.LessonRequest
+	if r.IsAdmin(userID) == false {
+		query := "SELECT * FROM lesson_requests WHERE user_id = ? AND status = ?"
+		result := r.db.Raw(query, userID, ds.DraftStatus).Scan(&lessons)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		return lessons, nil
+	}
 	fmt.Println(dateFrom, dateTo, status)
 	query := "SELECT * FROM lesson_requests WHERE date_formed BETWEEN ? AND ? AND status = ?"
 	result := r.db.Raw(query, dateFrom, dateTo, status).Scan(&lessons)

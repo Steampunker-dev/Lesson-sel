@@ -10,9 +10,23 @@ import (
 	"time"
 )
 
-// GetLessons - возращает все заявки
+// GetLessons
+// @Description get all lessons
+// @Tags lesson
+// @Produce json
+// @Success 200 {object} models.GetLessonsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /lesson [get]
 func (h *Handler) GetLessons(ctx *gin.Context) {
 	var request models.GetLessonsRequest
+	userID, ok := ctx.Get("user_id")
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "userID not found"})
+		return
+	}
+
+	request.UserID = userID.(uint)
 	dateFromQuery := ctx.Query("date_from")
 	dateToQuery := ctx.Query("date_to")
 	statusQuery := ctx.Query("status")
@@ -37,7 +51,7 @@ func (h *Handler) GetLessons(ctx *gin.Context) {
 		return
 	}
 	fmt.Println(dateTo, dateFrom)
-	lessons, err := h.Repository.GetLessons(dateFrom, dateTo, request.Status)
+	lessons, err := h.Repository.GetLessons(dateFrom, dateTo, request.Status, request.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -48,7 +62,14 @@ func (h *Handler) GetLessons(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.GetLessonsResponse{Lessons: lessons})
 }
 
-// DeleteLesson - устанавливает статус "удалено" для звонка
+// DeleteLesson
+// @Description delete lesson
+// @Tags call
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /lesson/{id} [delete]
 func (h *Handler) DeleteLesson(ctx *gin.Context) {
 	id := ctx.Param("id")
 
@@ -61,7 +82,16 @@ func (h *Handler) DeleteLesson(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
-// GetMyLessonCards рисует страницу с заявкой
+// GetMyLessonCards
+// @Description get my lesson cards
+// @Tags lesson
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} models.GetMyLessonCardsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /lesson/{id} [get]
 func (h *Handler) GetMyLessonCards(ctx *gin.Context) {
 	if lessonRequestId, err := strconv.Atoi(ctx.Param("id")); err == nil {
 		// Предполагаем, что пользователь идентификатор равен 1
@@ -94,8 +124,17 @@ func (h *Handler) GetMyLessonCards(ctx *gin.Context) {
 	}
 }
 
-// GetCall возвращает заявку на звонок-заявку
-func (h *Handler) GetCall(ctx *gin.Context) {
+// GetLesson
+// @Description get lesson by id
+// @Tags lesson
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} models.GetLessonResponse
+// @Failure 403 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /lesson/{id} [get]
+func (h *Handler) GetLesson(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	lesson, err := h.Repository.GetLessonRequestById(uint(id))
 	if err != nil {
@@ -126,8 +165,16 @@ func (h *Handler) GetCall(ctx *gin.Context) {
 	})
 }
 
-// UpdateCall обновляет заявку  по теме
-func (h *Handler) UpdateCall(ctx *gin.Context) {
+// UpdateLesson
+// @Description update lesson
+// @Tags lesson
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} models.UpdateLessonResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /Lesson/{id} [put]
+func (h *Handler) UpdateLesson(ctx *gin.Context) {
 	var request models.UpdateLessonRequest
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	request.ID = uint(id)
@@ -159,8 +206,16 @@ func (h *Handler) UpdateCall(ctx *gin.Context) {
 	})
 }
 
-// FormCall - формирует заявку
-func (h *Handler) FormCall(ctx *gin.Context) {
+// FormLesson
+// @Description form lesson
+// @Tags lesson
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} models.UpdateLessonResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /lesson/form/{id} [put]
+func (h *Handler) FormLesson(ctx *gin.Context) {
 	var request models.FinishLessonRequest
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	request.ID = uint(id)
@@ -180,8 +235,16 @@ func (h *Handler) FormCall(ctx *gin.Context) {
 	})
 }
 
-// CompleteOrRejectCall - завершает заявку
-func (h *Handler) CompleteOrRejectCall(ctx *gin.Context) {
+// CompleteOrRejectLesson
+// @Description complete or reject lesson
+// @Tags lesson
+// @Produce json
+// @Param id path string true "Lesson ID"
+// @Success 200 {object} models.CompleteOrRejectLessonResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /lesson/complete/{id} [put]
+func (h *Handler) CompleteOrRejectLesson(ctx *gin.Context) {
 	var request models.CompleteOrRejectLessonRequest
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	request.ID = uint(id)

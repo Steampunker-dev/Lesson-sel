@@ -12,7 +12,16 @@ import (
 	"strconv"
 )
 
-// Функция обработчика
+// GetAllTasks
+// @Description get all tasks
+// @Tags task
+// @Produce  json
+// @Param price_from query string false "Minutes from"
+// @Param price_to query string false "Minutes to"
+// @Success 200 {object} models.GetAllTaskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /task [get]
 func (h *Handler) GetAllTasks(ctx *gin.Context) {
 	var request models.GetAllTaskRequest
 	minutesFrom := ctx.Query("minutesFrom")
@@ -53,6 +62,14 @@ func (h *Handler) GetAllTasks(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+// GetTask
+// @Description get task by id
+// @Tags task
+// @Produce json
+// @Param id path string true "Task ID"
+// @Success 200 {object} models.GetTaskResponse
+// @Failure 500 {object} map[string]string
+// @Router /task/{id} [get]
 func (h *Handler) GetTask(ctx *gin.Context) {
 	var request models.GetTaskRequest
 	request.ID = ctx.Param("id")
@@ -68,7 +85,14 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 	})
 }
 
-// CreateDelivery создает карточку
+// CreateTask
+// @Description create task
+// @Tags task
+// @Produce json
+// @Success 200 {object} models.CreateTaskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /task [post]
 func (h *Handler) CreateTask(ctx *gin.Context) {
 	var request models.CreateTaskRequest
 	err := ctx.BindJSON(&request)
@@ -95,7 +119,15 @@ func (h *Handler) CreateTask(ctx *gin.Context) {
 	})
 }
 
-// UploadImage загружает изображение в minio
+// UploadImage
+// @Description load image to task
+// @Tags task
+// @Produce json
+// @Success 200 {object} models.UploadImageResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /task/img/{id} [post]
 func (h *Handler) UploadImage(ctx *gin.Context) {
 	var request models.UploadImageRequest
 	// считываем id из запроса
@@ -161,7 +193,14 @@ func (h *Handler) UploadImage(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"image_url": strURL})
 }
 
-// UpdateDelivery обновляет карточку
+// UpdateTask
+// @Description update task
+// @Tags task
+// @Produce json
+// @Success 200 {object} models.CreateTaskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /task/{id} [put]
 func (h *Handler) UpdateTask(ctx *gin.Context) {
 	var request models.CreateTaskRequest
 	err := ctx.BindJSON(&request)
@@ -192,7 +231,13 @@ func (h *Handler) UpdateTask(ctx *gin.Context) {
 
 }
 
-// DeleteDelivery удаляет карточку и редиректит на главную
+// DeleteTask
+// @Description Delete task
+// @Tags task
+// @Produce json
+// @Success 200 {object} models.CreateTaskResponse
+// @Failure 500 {object} map[string]string
+// @Router /task/{id} [delete]
 func (h *Handler) DeleteTask(ctx *gin.Context) {
 	id := ctx.Param("id")
 	err := h.Repository.DeleteTaskItem(id)
@@ -207,7 +252,13 @@ func (h *Handler) DeleteTask(ctx *gin.Context) {
 	})
 }
 
-// AddDeliveryToCall добавляет карточку в заявку
+// AddTaskToLesson
+// @Description Add task to lesson
+// @Tags task
+// @Produce json
+// @Success 200 {object} models.AddTasktoLessonResponse
+// @Failure 500 {object} map[string]string
+// @Router /task/add/{id} [post]
 func (h *Handler) AddTaskToLesson(ctx *gin.Context) {
 	itemID := ctx.Param("id")
 	intItemID, _ := strconv.Atoi(itemID)

@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"awesomeProject/docs"
+	"awesomeProject/internal/app/ds"
 	"awesomeProject/internal/app/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
 type Handler struct {
@@ -19,40 +22,53 @@ func NewHandler(l *logrus.Logger, r *repository.Repository) *Handler {
 }
 
 const (
-	DeliveryDomain = "/task"
-	CallDomain     = "/lesson"
-	RiDomain       = "/tl"
-	UserDomain     = "/user"
+	TaskDomain   = "/task"
+	LessonDomain = "/lesson"
+	RiDomain     = "/tl"
+	UserDomain   = "/user"
 )
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
-
+	docs.SwaggerInfo.Title = "LessonSel"
+	docs.SwaggerInfo.Description = "Lesson service"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.BasePath = "/"
 	// домен услуги /task
-	router.GET(DeliveryDomain, h.GetAllTasks)
-	router.GET(DeliveryDomain+"/:id", h.GetTask)
-	router.POST(DeliveryDomain, h.CreateTask) // without img
-	router.POST(DeliveryDomain+"/img/:id", h.UploadImage)
-	router.PUT(DeliveryDomain+"/:id", h.UpdateTask)
-	router.DELETE(DeliveryDomain+"/:id", h.DeleteTask)
-	router.POST(DeliveryDomain+"/add/:id", h.AddTaskToLesson)
+	router.GET(TaskDomain, h.RoleMiddleware1(AdminRole, UserRole, GuestRole), h.GetAllTasks)
+	router.GET(TaskDomain+"/:id", h.GetTask)
+	router.POST(TaskDomain, h.RoleMiddleware1(AdminRole), h.CreateTask) // without img
+	router.POST(TaskDomain+"/img/:id", h.RoleMiddleware1(AdminRole), h.UploadImage)
+	router.PUT(TaskDomain+"/:id", h.RoleMiddleware1(AdminRole), h.UpdateTask)
+	router.DELETE(TaskDomain+"/:id", h.RoleMiddleware1(AdminRole), h.DeleteTask)
+	router.POST(TaskDomain+"/add/:id", h.RoleMiddleware1(AdminRole, UserRole), h.AddTaskToLesson)
 
 	// домен заявки /lesson
-	router.GET(CallDomain, h.GetLessons)
-	router.GET(CallDomain+"/:id", h.GetCall)
-	router.PUT(CallDomain+"/:id", h.UpdateCall)
-	router.PUT(CallDomain+"/form/:id", h.FormCall)
-	router.PUT(CallDomain+"/complete/:id", h.CompleteOrRejectCall)
-	router.DELETE(CallDomain+"/:id", h.DeleteLesson)
+	router.GET(LessonDomain, h.RoleMiddleware1(AdminRole, UserRole), h.GetLessons)
+	router.GET(LessonDomain+"/:id", h.RoleMiddleware1(AdminRole, UserRole), h.GetLesson)
+	router.PUT(LessonDomain+"/:id", h.RoleMiddleware1(AdminRole, UserRole), h.UpdateLesson)
+	router.PUT(LessonDomain+"/form/:id", h.RoleMiddleware1(AdminRole), h.FormLesson)
+	router.PUT(LessonDomain+"/complete/:id", h.RoleMiddleware1(AdminRole), h.CompleteOrRejectLesson)
+	router.DELETE(LessonDomain+"/:id", h.RoleMiddleware1(AdminRole), h.DeleteLesson)
 
 	// домен м-м
-	router.DELETE(RiDomain+"/delete/:id", h.DeleteDC)
-	router.PUT(RiDomain+"/count/:id", h.UpdateDCCount)
+	router.DELETE(RiDomain+"/delete/:id", h.RoleMiddleware1(AdminRole, UserRole), h.DeleteDC)
+	router.PUT(RiDomain+"/count/:id", h.RoleMiddleware1(AdminRole, UserRole), h.UpdateDCCount)
 
 	// домен пользователя
-	router.POST(UserDomain, h.CreateUser)
+	router.POST(UserDomain+"/register", h.RegUser)
 	router.PUT(UserDomain+"/update", h.UpdateUser)
-	router.POST(UserDomain+"/auth", h.AuthUser)
+	router.POST(UserDomain+"/login", h.AuthUser)
 	router.POST(UserDomain+"/logout", h.LogoutUser)
+	// для админа
+	router.GET(UserDomain+"/protected", h.RoleMiddleware(ds.User{IsAdmin: true}), func(ctx *gin.Context) {
+		userID := ctx.MustGet("user_id").(uint)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "user is autorized",
+			"user_id": userID,
+		})
+	})
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {

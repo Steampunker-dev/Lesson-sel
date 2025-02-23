@@ -1,11 +1,724 @@
 basePath: /
+definitions:
+  ds.LessonRequest:
+    properties:
+      Lesson_time:
+        type: integer
+      date_accepted:
+        type: string
+      date_created:
+        type: string
+      date_formed:
+        type: string
+      delivery_type:
+        type: string
+      id:
+        type: integer
+      lesson_date:
+        type: string
+      status:
+        type: string
+    type: object
+  ds.TaskItem:
+    properties:
+      answer:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      minutes:
+        type: integer
+      title:
+        type: string
+    type: object
+  ds.User:
+    properties:
+      id:
+        type: integer
+      is_admin:
+        type: boolean
+      login:
+        type: string
+    type: object
+  models.AddTasktoLessonResponse:
+    properties:
+      task:
+        $ref: '#/definitions/ds.TaskItem'
+    type: object
+  models.AuthUserRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  models.CompleteOrRejectLessonResponse:
+    properties:
+      lessson_request:
+        allOf:
+        - $ref: '#/definitions/ds.LessonRequest'
+        description: заявка на доставку
+      total_count:
+        description: общее количество
+        type: integer
+    type: object
+  models.CreateTaskResponse:
+    properties:
+      lesson:
+        $ref: '#/definitions/ds.TaskItem'
+    type: object
+  models.CreateUserRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  models.CreateUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/ds.User'
+    type: object
+  models.GetAllTaskResponse:
+    properties:
+      cards:
+        items:
+          $ref: '#/definitions/ds.TaskItem'
+        type: array
+      req_id:
+        type: integer
+      req_less_count:
+        type: integer
+    type: object
+  models.GetLessonResponse:
+    properties:
+      lesson_request:
+        allOf:
+        - $ref: '#/definitions/ds.LessonRequest'
+        description: заявка на доставку
+      task_items:
+        description: карточки доставки
+        items:
+          $ref: '#/definitions/models.TaskItemWithCount'
+        type: array
+      tasks_count:
+        description: общее число доставок
+        type: integer
+    type: object
+  models.GetLessonsResponse:
+    properties:
+      lessons:
+        description: список звонков
+        items:
+          $ref: '#/definitions/ds.LessonRequest'
+        type: array
+    type: object
+  models.GetMyLessonCardsResponse:
+    properties:
+      count:
+        description: количество карточек
+        type: integer
+      lesson_request:
+        allOf:
+        - $ref: '#/definitions/ds.LessonRequest'
+        description: заявка на доставку
+      task_items:
+        description: карточки доставки
+        items:
+          $ref: '#/definitions/ds.TaskItem'
+        type: array
+    type: object
+  models.GetTaskResponse:
+    properties:
+      cards:
+        $ref: '#/definitions/ds.TaskItem'
+    type: object
+  models.LogoutUserRequest:
+    properties:
+      login:
+        type: string
+    type: object
+  models.TaskItemWithCount:
+    properties:
+      answer:
+        type: string
+      description:
+        type: string
+      forced:
+        type: boolean
+      id:
+        type: integer
+      image:
+        type: string
+      minutes:
+        type: integer
+      title:
+        type: string
+    type: object
+  models.UpdateLessonResponse:
+    properties:
+      lesson_request:
+        allOf:
+        - $ref: '#/definitions/ds.LessonRequest'
+        description: заявка на доставку
+    type: object
+  models.UpdateUserRequest:
+    properties:
+      id:
+        type: integer
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  models.UploadImageResponse:
+    properties:
+      image_url:
+        type: string
+    type: object
 host: 127.0.0.1
 info:
   contact: {}
   description: Lesson service
   title: Lesson_sel
   version: "1.0"
-paths: {}
+paths:
+  /Lesson/{id}:
+    put:
+      description: update lesson
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpdateLessonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - lesson
+  /lesson:
+    get:
+      description: get all lessons
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetLessonsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - lesson
+  /lesson/{id}:
+    delete:
+      description: delete lesson
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - call
+    get:
+      description: get lesson by id
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetLessonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - lesson
+  /lesson/complete/{id}:
+    put:
+      description: complete or reject lesson
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CompleteOrRejectLessonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - lesson
+  /lesson/form/{id}:
+    put:
+      description: form lesson
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpdateLessonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - lesson
+  /task:
+    get:
+      description: get all tasks
+      parameters:
+      - description: Minutes from
+        in: query
+        name: price_from
+        type: string
+      - description: Minutes to
+        in: query
+        name: price_to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetAllTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+    post:
+      description: create task
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreateTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+  /task/{id}:
+    delete:
+      description: Delete task
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreateTaskResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+    get:
+      description: get task by id
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetTaskResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+    put:
+      description: update task
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreateTaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+  /task/add/{id}:
+    post:
+      description: Add task to lesson
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AddTasktoLessonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+  /task/img/{id}:
+    post:
+      description: load image to task
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UploadImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - task
+  /tl/count/{id}:
+    put:
+      description: update dc count
+      parameters:
+      - description: lesson id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - DC
+  /tl/delete/{id}:
+    delete:
+      description: delete dc
+      parameters:
+      - description: lesson id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - DC
+  /user/login:
+    post:
+      description: auth user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AuthUserRequest'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - user
+  /user/logout:
+    post:
+      description: logout user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.LogoutUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - user
+  /user/register:
+    post:
+      description: create user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.CreateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - user
+  /user/update:
+    put:
+      description: update user
+      parameters:
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CreateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      tags:
+      - user
 schemes:
 - http
 swagger: "2.0"

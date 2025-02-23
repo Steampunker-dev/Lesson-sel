@@ -65,7 +65,14 @@ services:
       - minio2
       - minio3
       - minio4
-
+  redis:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass password
+    volumes:
+      - redis-data:/data
   postgres:
     image: postgres:latest
     environment:
@@ -99,6 +106,7 @@ volumes:
   data3-2:
   data4-1:
   data4-2:
-
+  redis-data:
+    driver: local
   postgres:
   pgadmin:
