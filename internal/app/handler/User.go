@@ -2,6 +2,7 @@ package handler
 
 import (
 	"awesomeProject/internal/app/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -70,12 +71,14 @@ func (h *Handler) UpdateUser(ctx *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /user/login [post]
 func (h *Handler) AuthUser(ctx *gin.Context) {
+	fmt.Println("логинимс")
+
 	var request models.AuthUserRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	fmt.Println(request.Login, request.Password)
 	token, err := h.Repository.AuthUser(request.Login, request.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

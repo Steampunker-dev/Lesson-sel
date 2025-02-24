@@ -74,12 +74,15 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 	var request models.GetTaskRequest
 	request.ID = ctx.Param("id")
 	card, err := h.Repository.GetTaskItemByID(request.ID)
+	fmt.Println(err)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+	fmt.Println(card)
+
 	ctx.JSON(http.StatusOK, models.GetTaskResponse{
 		Card: card,
 	})
