@@ -50,28 +50,28 @@ func (r *Repository) UpdateUser(id uint, name, password string) (*ds.User, error
 }
 
 // AuthUser - аутентификация пользователя по логину и паролю
-func (r *Repository) AuthUser(name, password string) (string, error) {
+func (r *Repository) AuthUser(name, password string) (string, bool, error) {
 	var user ds.User
 	// сперва проверим по логину
 	if err := r.db.Where("login = ?", name).First(&user).Error; err != nil {
-		return "", errors.New("user does not exist")
+		return "", false, errors.New("user does not exist")
 
 	}
 	if user.Password != password {
-		return "", errors.New("incorrect password")
+		return "", false, errors.New("incorrect password")
 	}
 
 	token, err := GenerateJWTToken(user.ID, user.IsAdmin)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	err = r.SaveJWTToken(user.ID, token)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
-	return token, nil
+	return token, user.IsAdmin, nil
 }
 
 // LogoutUser - выход пользователя

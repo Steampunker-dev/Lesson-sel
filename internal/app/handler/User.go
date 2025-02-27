@@ -2,6 +2,7 @@ package handler
 
 import (
 	"awesomeProject/internal/app/models"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -79,14 +80,16 @@ func (h *Handler) AuthUser(ctx *gin.Context) {
 		return
 	}
 	fmt.Println(request.Login, request.Password)
-	token, err := h.Repository.AuthUser(request.Login, request.Password)
+	token, isAdmin, err := h.Repository.AuthUser(request.Login, request.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, models.AuthUserResponse{
-		Token: token,
+	ctx.JSON(http.StatusOK, gin.H{
+		"token":   token,
+		"login":   request.Login,
+		"isAdmin": isAdmin,
 	})
 }
 
@@ -100,91 +103,45 @@ func (h *Handler) AuthUser(ctx *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /user/logout [post]
 func (h *Handler) LogoutUser(ctx *gin.Context) {
+	raw, _ := ctx.GetRawData()
+	fmt.Println("RAW REQUEST BODY:", string(raw)) // Логируем сырое тело запроса
+
 	var request models.LogoutUserRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	// Пробуем сразу распарсить JSON
+	if err := json.Unmarshal(raw, &request); err != nil {
+		fmt.Println("Ошибка парсинга JSON:", err)
+
+		// КОСТЫЛЬ: если пришла строка (например, "lexa"), пытаемся обернуть её в JSON
+		if json.Valid([]byte(fmt.Sprintf(`{"login": %s}`, raw))) {
+			fixedJSON := []byte(fmt.Sprintf(`{"login": %s}`, raw))
+			fmt.Println("Исправленный JSON:", string(fixedJSON))
+			_ = json.Unmarshal(fixedJSON, &request) // Повторная попытка парсинга
+		} else {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Некорректный JSON"})
+			return
+		}
+	}
+
+	// Проверяем, не пустой ли логин после обработки
+	if request.Login == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Поле login отсутствует"})
 		return
 	}
 
+	// Извлекаем токен из заголовка
+	tokenString := extractTokenFromHeader(ctx.Request)
+	if tokenString == "" {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	// Вызываем логику выхода пользователя
 	err := h.Repository.LogoutUser(request.Login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "user logged out"})
-
-	/*// получаем заголовок
-	jwtStr := ctx.GetHeader("Authorization")
-	if !strings.HasPrefix(jwtStr, prefix) {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
-		return
-	}
-	// отрезаем префикс
-	jwtStr = jwtStr[len(prefix):]
-
-	_, err := jwt.ParseWithClaims(jwtStr, &ds.JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
-		log.Println(err)
 		return
 	}
 
-	// сохраняем в блеклист редиса
-	//err = h.Repository.WriteJWTToBlacklist(jwtStr, time.Hour)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "cant write to blacklist"})
-		log.Println(err)
-		return
-	}
-
-	ctx.Status(http.StatusOK)*/
-
+	ctx.JSON(http.StatusOK, gin.H{"logout": "success"})
 }
-
-/*
-func (h *Handler) LoginUser(gCtx *gin.Context) {
-	cfg := h.
-	req := &models.LoginUserRequest{}
-
-	err := json.NewDecoder(gCtx.Request.Body).Decode(req)
-	if err != nil {
-		gCtx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	if req.Login == login && req.Password == password {
-		// значит проверка пройдена
-		// генерируем ему jwt
-		token := jwt.NewWithClaims(cfg.JWT.SigningMethod, &ds.JWTClaims{
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(cfg.JWT.ExpiresIn).Unix(),
-				IssuedAt:  time.Now().Unix(),
-				Issuer:    "DeliVeryWell-admin",
-			},
-			UserUUID: uuid.New(), // test uuid
-			Scopes:   []string{}, // test data
-		})
-
-		if token == nil {
-			gCtx.AbortWithError(http.StatusInternalServerError, fmt.Errorf("token is nil"))
-			return
-		}
-
-		strToken, err := token.SignedString([]byte(cfg.JWT.Token))
-		if err != nil {
-			gCtx.AbortWithError(http.StatusInternalServerError, fmt.Errorf("cant create str token"))
-			return
-		}
-
-		gCtx.JSON(http.StatusOK, models.LoginUserResponse{
-			ExpiresIn:   cfg.JWT.ExpiresIn,
-			AccessToken: strToken,
-			TokenType:   "Bearer",
-		})
-	}
-
-	gCtx.AbortWithStatus(http.StatusForbidden) // отдаем 403 ответ в знак того что доступ запрещен
-}
-
-*/

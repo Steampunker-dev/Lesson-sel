@@ -23,8 +23,7 @@ type UpdateLessonRequest struct {
 }
 
 type FinishLessonRequest struct {
-	ID     uint `json:"id"`      // идентификатор
-	UserID uint `json:"user_id"` // модератор
+	ID uint `json:"id"` // идентификатор
 }
 
 type CompleteOrRejectLessonRequest struct {
@@ -47,9 +46,9 @@ type GetMyLessonCardsResponse struct {
 
 type GetLessonResponse struct {
 	LessonRequest *ds.LessonRequest   `json:"lesson_request"` // заявка на доставку
-	TaskItems     []TaskItemWithCount `json:"task_items"`     // карточки доставки
+	TaskItems     []TaskItemWithCount `json:"fines"`          // карточки доставки
 	// общее число доставок
-	DeliveriesCount int `json:"tasks_count"`
+	Count int `json:"count"`
 }
 
 type TaskItemWithCount struct {

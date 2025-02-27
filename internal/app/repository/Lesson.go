@@ -144,15 +144,15 @@ func (r *Repository) CreateDraftRequestAndGetID(userID uint) (uint, error) {
 }
 
 // LinkItemToDraftRequest связывает элемент с черновиком заявки
-func (r *Repository) LinkItemToDraftRequest(userID uint, itemId uint) error {
+func (r *Repository) LinkItemToDraftRequest(userID uint, itemId uint) (uint, error) {
 	// нужно проверить, является ли удаленной
 	var item ds.TaskItem
 	err_ := r.db.Where("id = ?", itemId).First(&item).Error
 	if err_ != nil {
-		return fmt.Errorf("error fetching item: %w", err_)
+		return 0, fmt.Errorf("error fetching item: %w", err_)
 	}
 	if item.IsDelete == true {
-		return fmt.Errorf("item with id %d is deleted", itemId)
+		return 0, fmt.Errorf("item with id %d is deleted", itemId)
 	}
 
 	// поик существующей заявки пользователя со статусом 'черновик'
@@ -161,13 +161,14 @@ func (r *Repository) LinkItemToDraftRequest(userID uint, itemId uint) error {
 	if err == gorm.ErrRecordNotFound {
 		// если заявки нет, создаем новую
 		draftRequest.UserID = userID
+		draftRequest.ModeratorID = 4
 		draftRequest.Status = ds.DraftStatus
 		//draftRequest.Address = ""
 		draftRequest.LessonDate = time.Now()
 		draftRequest.LessonType = ds.Common_lesson
 		err = r.db.Create(&draftRequest).Error
 		if err != nil {
-			return fmt.Errorf("error creating new draft request: %w", err)
+			return 0, fmt.Errorf("error creating new draft request: %w", err)
 		}
 		r.logger.Infof("Created new draft request ID: %d for user ID: %d", draftRequest.ID, userID)
 	} else {
@@ -182,16 +183,17 @@ func (r *Repository) LinkItemToDraftRequest(userID uint, itemId uint) error {
 	}
 	err = r.db.Create(&itemRequest).Error
 	if err != nil {
-		return fmt.Errorf("error linking item to draft request: %w", err)
+		return 0, fmt.Errorf("error linking item to draft request: %w", err)
 	}
 
-	return nil
+	return itemRequest.RequestID, nil
 }
 
 // HasRequestByUserID проверяет наличие заявки пользователя
 func (r *Repository) HasRequestByUserID(userID uint) (uint, error) {
 	var req ds.LessonRequest
 	err := r.db.Where("user_id = ? AND status = ?", userID, ds.DraftStatus).First(&req).Error
+	fmt.Println(userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Если ошибка о том, то записи нет, то нет ошибки, тк нужно потом вывести заявку с null+0 полями
@@ -243,24 +245,13 @@ func (r *Repository) UpdateLessons(lesson *ds.LessonRequest) (*ds.LessonRequest,
 }
 
 // FormLesson- формирование Lesson
-func (r *Repository) FormLesson(lessonID uint, userID uint) (*ds.LessonRequest, error) {
+func (r *Repository) FormLesson(lessonID uint) (*ds.LessonRequest, error) {
 	// Получение звонка из базы данных
 	var existingLesson ds.LessonRequest
-	if err := r.db.Where("id = ? AND user_id = ?", lessonID, userID).First(&existingLesson).Error; err != nil {
+	if err := r.db.Where("id = ?", lessonID).First(&existingLesson).Error; err != nil {
 		return nil, err
 	}
 	fmt.Println("call", existingLesson.ID, existingLesson.UserID, existingLesson.Status)
-
-	b := !(existingLesson.UserID == userID) || !(r.IsAdmin(userID))
-	a := !(existingLesson.UserID == userID)
-	c := r.IsAdmin(userID)
-	fmt.Println(b, a, c, existingLesson.UserID, userID)
-	// Проверка, что пользователь является владельцем заявки или модератором
-	if !(existingLesson.UserID == userID) {
-		if !(r.IsAdmin(userID)) {
-			return nil, fmt.Errorf("user with id %d is not the owner of the call request or a moderator", userID)
-		}
-	}
 
 	// Проверка, что статус звонка является "черновиком"
 	if existingLesson.Status != ds.DraftStatus {

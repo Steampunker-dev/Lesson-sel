@@ -2,8 +2,10 @@ package handler
 
 import (
 	"awesomeProject/internal/app/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"reflect"
 	"strconv"
 )
 
@@ -17,21 +19,21 @@ import (
 // @Failure 500 {object} map[string]string
 // @Router /tl/delete/{id} [delete]
 func (h *Handler) DeleteDC(ctx *gin.Context) {
-	lessonid, _ := strconv.Atoi(ctx.Param("id"))
-	var request models.DeleteTLRequest
-	request.LessonID = uint(lessonid)
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	id := ctx.Param("id")
+	num, err1 := strconv.ParseUint(id, 10, 64) // 10 - система счисления, 64 - битность
+	if err1 != nil {
+		fmt.Println("Ошибка:", err1)
 		return
 	}
-
-	err := h.Repository.DeleteTL(request.TaskID, request.LessonID)
+	fmt.Println(reflect.TypeOf(num), num)
+	task_id := uint(num)
+	err := h.Repository.DeleteTL(task_id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
+	ctx.JSON(http.StatusOK, gin.H{"status": "Deleted"})
 }
 
 // UpdateDCCount

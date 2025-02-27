@@ -28,12 +28,13 @@ func (h *Handler) GetAllTasks(ctx *gin.Context) {
 	minutesTo := ctx.Query("minutesTo")
 	request.MinutesFrom = minutesFrom
 	request.MinutesTo = minutesTo
-
-	userId := 1
-	reqCount, _ := h.Repository.GetLessonReqCount(ds.DraftStatus, uint(userId))
+	//?minutesFrom=&minutesTo=
+	userID, _ := ctx.Get("user_id") // Получаем значение из контекста
+	fmt.Println(userID)
+	resCount, _ := h.Repository.GetLessonReqCount(ds.DraftStatus, userID.(uint))
 
 	// Проверка на наличие заявки
-	reqID, _ := h.Repository.HasRequestByUserID(uint(userId))
+	resID, _ := h.Repository.HasRequestByUserID(userID.(uint))
 	// Если заявки нет, нужно вывести заявку с нулевыми полями, пустую
 
 	var cards *[]ds.TaskItem
@@ -54,9 +55,9 @@ func (h *Handler) GetAllTasks(ctx *gin.Context) {
 		return
 	}
 	response := models.GetAllTaskResponse{
-		ReqID:          int(reqID),
-		ReqLessonCount: int(reqCount),
 		Card:           cards,
+		ReqID:          int(resID),
+		ReqLessonCount: int(resCount),
 	}
 
 	ctx.JSON(http.StatusOK, response)
@@ -266,18 +267,25 @@ func (h *Handler) AddTaskToLesson(ctx *gin.Context) {
 	itemID := ctx.Param("id")
 	intItemID, _ := strconv.Atoi(itemID)
 	userID := 4
+	fmt.Println(ctx.Get("user_id"))
+	fmt.Println("888888888888888888888888888888888888888888888888888888888888888")
 
-	err := h.Repository.LinkItemToDraftRequest(uint(userID), uint(intItemID))
+	resId, err := h.Repository.LinkItemToDraftRequest(uint(userID), uint(intItemID))
 	if err != nil {
-	}
-	task, err_ := h.Repository.GetTaskItemByID(itemID)
-	if err_ != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err_.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, models.AddTasktoLessonResponse{
-		TaskItem: task,
+	//task, err_ := h.Repository.GetTaskItemByID(itemID)
+	//if err_ != nil {
+	//	ctx.JSON(http.StatusInternalServerError, gin.H{
+	//		"error": err_.Error(),
+	//	})
+	//	return
+	//}
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "added",
+		"resId":   resId,
 	})
 }

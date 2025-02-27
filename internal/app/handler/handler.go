@@ -29,6 +29,18 @@ const (
 )
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Разрешаем все источники
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK) // Возвращаем 200 OK на OPTIONS
+			return
+		}
+
+		c.Next()
+	})
 	docs.SwaggerInfo.Title = "LessonSel"
 	docs.SwaggerInfo.Description = "Lesson service"
 	docs.SwaggerInfo.Version = "1.0"

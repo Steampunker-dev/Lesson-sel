@@ -31,9 +31,9 @@ type UploadImageRequest struct {
 // Ответ
 
 type GetAllTaskResponse struct {
-	ReqID          int            `json:"req_id"`
-	ReqLessonCount int            `json:"req_less_count"`
-	Card           *[]ds.TaskItem `json:"cards"`
+	Card           *[]ds.TaskItem `json:"tasks"`
+	ReqID          int            `json:"resId"`
+	ReqLessonCount int            `json:"resCount"`
 }
 
 type GetTaskResponse struct {

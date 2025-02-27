@@ -3,6 +3,7 @@ package handler
 import (
 	"awesomeProject/internal/app/ds"
 	"awesomeProject/internal/app/models"
+	"awesomeProject/internal/app/services"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 // @Failure 500 {object} map[string]string
 // @Router /lesson [get]
 func (h *Handler) GetLessons(ctx *gin.Context) {
+	fmt.Println(ctx.GetRawData())
 	var request models.GetLessonsRequest
 	userID, ok := ctx.Get("user_id")
 	if !ok {
@@ -30,7 +32,7 @@ func (h *Handler) GetLessons(ctx *gin.Context) {
 	dateFromQuery := ctx.Query("date_from")
 	dateToQuery := ctx.Query("date_to")
 	statusQuery := ctx.Query("status")
-
+	fmt.Println("dfsfdsf")
 	request.DateFrom = dateFromQuery
 	request.DateTo = dateToQuery
 	request.Status = statusQuery
@@ -58,8 +60,22 @@ func (h *Handler) GetLessons(ctx *gin.Context) {
 		})
 		return
 	}
+	// 3. Генерируем QR для каждого урока, собираем их в отдельный массив qrs
+	qrs := make([]string, len(lessons))
+	for i, lesson := range lessons {
+		qrBase64, err := services.GenerateLessonQR(*lesson)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации QR"})
+			return
+		}
+		qrs[i] = qrBase64
+	}
 
-	ctx.JSON(http.StatusOK, models.GetLessonsResponse{Lessons: lessons})
+	// 4. Возвращаем уроки и QR-коды (раздельно):
+	ctx.JSON(http.StatusOK, gin.H{
+		"lessons": lessons,
+		"qrs":     qrs,
+	})
 }
 
 // DeleteLesson
@@ -159,9 +175,9 @@ func (h *Handler) GetLesson(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, models.GetLessonResponse{
-		LessonRequest:   lesson,
-		TaskItems:       taskItemsWithCount,
-		DeliveriesCount: len(taskItemsWithCount),
+		LessonRequest: lesson,
+		TaskItems:     taskItemsWithCount,
+		Count:         len(taskItemsWithCount),
 	})
 }
 
@@ -219,13 +235,11 @@ func (h *Handler) FormLesson(ctx *gin.Context) {
 	var request models.FinishLessonRequest
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	request.ID = uint(id)
+	fmt.Println(request.ID)
 
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	fmt.Println(request.UserID, "")
-	resp, err := h.Repository.FormLesson(request.ID, request.UserID)
+	fmt.Println("request")
+
+	resp, err := h.Repository.FormLesson(request.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -267,8 +281,18 @@ func (h *Handler) CompleteOrRejectLesson(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, models.CompleteOrRejectLessonResponse{
-		CallRequest: resp,
-		TotalCount:  totalCount,
+	qrCode, err := services.GenerateLessonQR(*resp)
+	println(qrCode)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Ошибка генерации QR-кода: " + err.Error(),
+		})
+		return
+	}
+	fmt.Println(qrCode)
+	ctx.JSON(http.StatusOK, gin.H{
+		"CallRequest": resp,
+		"TotalCount":  totalCount,
+		"qr":          qrCode,
 	})
 }
